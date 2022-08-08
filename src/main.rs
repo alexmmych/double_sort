@@ -2,25 +2,25 @@
 //the total amount of numbers is uneven.
 
 //Tuple sort works by separating the numbers into pairs of two called nodes, this allows
-//to order the two numbers within the node extremely fast since it's a 1:1 comparison
+//to order the two numbers within the node extremely fast since it's a 1:1 and memory swap
 
-//After the given vector of numbers has been given to the function, it will divide them into nodes using chunks
-//and it will proceed to sort them firstly by sorting the lowest numbers and setting them in position
-//and then comparing the right most numbers against the neighbour's left most number to see which one is smaller
+//After the vector of numbers has been given to the function, it will divide them into nodes using chunks
+//and it will proceed to sort them firstly by using a min BinaryHeap which will pop the in ascending order automatically
+//and then it compares the right most number against the neighbour's left most number to see which one is smaller
 //and changes them accordingly until fully solved.
 
-#[derive(Copy, Clone)]
-struct Node(u32,Option<u32>);
+use std::collections::BinaryHeap;
+use std::cmp::Reverse;
+use std::cmp::Ordering;
+
+#[derive(PartialEq, PartialOrd,Eq,Debug)]
+struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
 
 impl Node {
     //Rearranges the node to be ordered.
     fn order(&mut self) {
-        if let Some(number) = self.1 {
-            if number < self.0 {
-                let temp = self.0;
-                self.0 = number;
-                *self.1.as_mut().unwrap() = temp;
-            }
+        if let Some(_number) = self.1 {
+            switch(&mut self.0,self.1.as_mut().unwrap());
         }
     }
 
@@ -28,24 +28,39 @@ impl Node {
     fn slices(&self) -> Vec<u32> {
         let mut vector = Vec::new();
         vector.push(self.0);
-
+    
         if let Some(number) = self.1 {
             vector.push(number);
         }
-
+    
         vector
     }
 }
 
-/*
-fn sort_loop(left: &u32, right: &u32) {
-    
+//Implementation for order so BinaryHeap only considers leftmost value
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
 }
-*/
+
+fn switch<T: PartialOrd>(left: &mut T,right: &mut T) {
+    if left > right {
+        std::mem::swap(left,right);
+    }
+}
 
 //Sorts a vector of numbers
-fn tuple_sort(list: &mut [u32]) -> Vec<Vec<u32>> {
-    let mut sorted_vector = Vec::new();
+fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
+
+    //Panics if the vector is empty
+    if list.is_empty() {
+        panic!("tuple_sort() called with an empty vector.");
+    }
+
+    let mut heap = BinaryHeap::new();
+    let mut vec = Vec::new();
+    let mut result = Vec::new(); //The vector to be given at end.
 
     //Creates nodes from chunks of the vector
     for chunk in list.chunks(2) {
@@ -59,44 +74,26 @@ fn tuple_sort(list: &mut [u32]) -> Vec<Vec<u32>> {
 
         node.order();
 
-        sorted_vector.push(node);
+        heap.push(Reverse(node));
     }
+
+    //Important check to instantly return ordered vector if it only contains 1 or 2 elements.
+    if heap.len() == 1 {
+        result.append(&mut heap.pop().unwrap().0.slices());
+        return result;
+    }
+
 
     //Mutable values used to control the while loop
     let mut sorted = false;
     let mut counter = 0;
     let mut reset = 0;
 
-    //Initial ordering of the nodes by their leftmost values
-    while sorted == false {
-        if sorted_vector[counter].0 > sorted_vector[counter+1].0 {
-            let temp = sorted_vector[counter];
-            sorted_vector[counter] = sorted_vector[counter+1];
-            sorted_vector[counter+1] = temp;
-        }
-
-        //Increment counter
-        counter += 1;
-        
-        //Reset if to avoid accessing out of bounds
-        if counter == sorted_vector.len() - 1 { // -1 because the if above adds +1 to the counter
-        
-            if reset >= sorted_vector.len() {
-                //Closing boolean
-                counter = 0;
-                reset = 0;
-                sorted = true;
-            }
-        
-            //Resets counter and increments the reset variable
-            counter = 0;
-            reset += 1;
-        }
+    //Moves the sorted nodes into the vector
+    while !heap.is_empty() {
+        vec.push(heap.pop().unwrap().0);
     }
-
-    //Reset of the previous values
-    sorted = false;
-
+    
     //Info on how many times the while loop ran, including resets.
     let mut total = 0;
 
@@ -104,17 +101,13 @@ fn tuple_sort(list: &mut [u32]) -> Vec<Vec<u32>> {
     while sorted == false  {
         
         //Guard if if the stored value is None.
-        if let Some(number) = sorted_vector[counter].1 {
+        if let Some(_number) = vec[counter].1 {
+            let (left,right) = vec.split_at_mut(counter+1);
 
-            if number > sorted_vector[counter+1].0 {
-                let temp = sorted_vector[counter+1].0;
+            switch(left[counter].1.as_mut().unwrap(), &mut right[0].0);
 
-                sorted_vector[counter+1].0 = number;
-                *sorted_vector[counter].1.as_mut().unwrap() = temp;
-
-                sorted_vector[counter].order();
-                sorted_vector[counter+1].order();
-            } 
+            left[counter].order();
+            right[0].order();
         }
 
         //Increment counter
@@ -124,7 +117,7 @@ fn tuple_sort(list: &mut [u32]) -> Vec<Vec<u32>> {
         total += 1;
 
         //Reset if to avoid accessing out of bounds
-        if counter == sorted_vector.len() - 1 { // -1 because the if above adds +1 to the counter
+        if counter == vec.len() - 1 { // -1 because the if above adds +1 to the counter
 
             if reset == 1 {
                 //Info dump
@@ -138,23 +131,20 @@ fn tuple_sort(list: &mut [u32]) -> Vec<Vec<u32>> {
             reset += 1;
         }
     }
+    
+    for node in vec {
+        result.append(&mut node.slices());
+    } 
 
-    let mut result = Vec::new();
-
-    for node in sorted_vector {
-        result.push(node.slices());
-    }
 
     result
-
 }
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![43,47,87,54,65,34,567,79,2];
+    let mut numbers = vec![75,23,5,6,7234,734,7345,788,56];
 
 
     let result = tuple_sort(&mut numbers);
-
-    println!("{:?}",result);
+    println!("Result: {:?}",result);
 }
