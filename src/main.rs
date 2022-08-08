@@ -55,7 +55,7 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
     //Panics if the vector is empty
     if list.is_empty() {
-        panic!("tuple_sort() called with an empty vector.");
+        panic!("tuple_sort() called with empty vector: {:?}", list.as_ptr());
     }
 
     let mut heap = BinaryHeap::new();
@@ -142,9 +142,9 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![75,23,5,6,7234,734,7345,788,56];
-
+    let mut numbers = vec![75,23,5,6,7234,734,788,56];
 
     let result = tuple_sort(&mut numbers);
+
     println!("Result: {:?}",result);
 }
