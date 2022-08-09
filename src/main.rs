@@ -98,7 +98,7 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
     while sorted == false  {
         
         //Guard if if the stored value is None.
-        if let Some(_number) = vec[counter].1 {
+        if let Some(_number) = &vec[counter].1 {
             let (left,right) = vec.split_at_mut(counter+1);
 
             switch(left[counter].1.as_mut().unwrap(), &mut right[0].0);
@@ -112,6 +112,22 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
             left[counter].order();
             right[0].order();
+        }
+
+        //This next operation places every node into the heap and then pops it out back into the vector
+        //So the heap can automatically order the nodes if their order changed during the swap operations
+
+        //This puts everything in the heap.
+        for node in vec {
+            heap.push(Reverse(node));
+        }
+
+        //Resets the vector
+        vec = Vec::new();
+
+        //Moves the sorted nodes into the vector
+        while !heap.is_empty() {
+            vec.push(heap.pop().unwrap().0);
         }
 
         //Increment counter
@@ -137,7 +153,7 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![75,23,5,6,24,34,78,56,42];
+    let mut numbers = vec![42,67,12,13,34,44,778,23,56,6];
 
     let result = tuple_sort(&mut numbers);
 
