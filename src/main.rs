@@ -87,15 +87,12 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
     //Mutable values used to control the while loop
     let mut sorted = false;
     let mut counter = 0;
-    let mut reset = 0;
 
     //Moves the sorted nodes into the vector
     while !heap.is_empty() {
         vec.push(heap.pop().unwrap().0);
     }
     
-    //Info on how many times the while loop ran, including resets.
-    let mut total = 0;
 
     //Final sort of the values by comparing right and left values of neighbouring nodes
     while sorted == false  {
@@ -108,27 +105,25 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
             left[counter].order();
             right[0].order();
+
+        } else { //This happens when for example (75,None) (56,78) are neighbours and they need to be swapped to (56, None) (75,78)
+            let (left,right) = vec.split_at_mut(counter+1);
+            switch(&mut left[counter].0, &mut right[0].0);
+
+            left[counter].order();
+            right[0].order();
         }
 
         //Increment counter
         counter += 1;
 
-        //Info
-        total += 1;
 
-        //Reset if to avoid accessing out of bounds
-        if counter == vec.len() - 1 { // -1 because the if above adds +1 to the counter
-
-            if reset == 1 {
-                //Info dump
-                println!("Total reads done: {}",total);
-                //Closing boolean
-                sorted = true;
-            }
-
-            //Resets counter and increments the reset variable
-            counter = 0;
-            reset += 1;
+        //Reset to avoid accessing out of bounds
+        if counter == vec.len() - 1 {
+            //Info dump
+            println!("Total reads done: {}",counter);
+            //Closing boolean
+            sorted = true; 
         }
     }
     
@@ -142,7 +137,7 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![75,23,5,6,7234,734,788,56];
+    let mut numbers = vec![75,23,5,6,24,34,78,56,42];
 
     let result = tuple_sort(&mut numbers);
 
