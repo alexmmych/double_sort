@@ -13,7 +13,7 @@ use std::collections::BinaryHeap;
 use std::cmp::Reverse;
 use std::cmp::Ordering;
 
-#[derive(PartialEq, PartialOrd,Eq)]
+#[derive(PartialEq, PartialOrd,Eq,Debug)]
 struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
 
 impl Node {
@@ -51,17 +51,14 @@ fn switch<T: PartialOrd>(left: &mut T,right: &mut T) {
 }
 
 //Sorts a vector of numbers
-fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
-    let mut heaps = 0; //Amount of times the heap was popped.
-
+fn tuple_sort(list: &mut Vec<u32>) {
     //Panics if the vector is empty
     if list.is_empty() {
         panic!("tuple_sort() called with empty vector: {:?}", list.as_ptr());
     }
 
+    //BinaryHeap is used due to it's efficient ordering capabilities.
     let mut heap = BinaryHeap::new();
-    let mut vec = Vec::new();
-    let mut result = Vec::new(); //The vector to be given at end.
 
     //Creates nodes from chunks of the vector
     for chunk in list.chunks(2) {
@@ -78,85 +75,72 @@ fn tuple_sort(list: &mut [u32]) -> Vec<u32> {
         heap.push(Reverse(node));
     }
 
+    //Clears the list so it can be given the sorted slices
+    list.clear();
+
     //Important check to instantly return ordered vector if it only contains 1 or 2 elements.
     if heap.len() == 1 {
-        result.append(&mut heap.pop().unwrap().0.slices());
-        return result;
+        list.append(&mut heap.pop().unwrap().0.slices());
+        return;
     }
-
 
     //Mutable values used to control the while loop
     let mut sorted = false;
     let mut counter = 0;
-
-    //Moves the sorted nodes into the vector
-    while !heap.is_empty() {
-        vec.push(heap.pop().unwrap().0);
-    }
     
-    //Final sort of the values by comparing right and left values of neighbouring nodes
+    //Final sort of the values by comparing left and right values of neighbouring nodes
     while sorted == false  {
+        let mut temp_heap = BinaryHeap::new();
 
-        let (left,right) = vec.split_at_mut(counter+1);
-        
-        //Guard if if the stored value is None.
-        if let Some(_number) = left[counter].1 {
-            switch(left[counter].1.as_mut().unwrap(), &mut right[0].0); // In the case that (x,y)(x1,y1) are neighbour nodes then swap (x,x1) (y,y1) if y > x1
-
-            left[counter].order();
-            right[0].order();
-
-        } else { //This happens when for example (75,None) (56,78) are neighbours and they need to be swapped to (56, None) (75,78)
-            switch(&mut left[counter].0, &mut right[0].0);
-
-            left[counter].order();
-            right[0].order();
+        //Temporary heap pops already sorted nodes into itself.
+        for _i in 0..counter {
+            temp_heap.push(heap.pop().unwrap());
         }
 
-        //This next operation places every node into the heap and then pops it out back into the vector
-        //So the heap can automatically order the nodes if their order changed during the swap operations
-        if right.len() != 1 && right[0].0 > right[1].0 {
-        
-            //This puts everything in the heap.
-            for node in vec {
-                heap.push(Reverse(node));
-            }
+        let mut left = heap.pop().unwrap().0;
+        let mut right = heap.pop().unwrap().0;
 
-            //Resets the vector
-            vec = Vec::new();
-
-            //Moves the sorted nodes into the vector
-            while !heap.is_empty() {
-                vec.push(heap.pop().unwrap().0);
-            }
+        if let Some(_number) = left.1 {
+            switch(left.1.as_mut().unwrap(),&mut right.0);
+        } else {
+            switch(&mut left.0,&mut right.0);
         }
 
-        //Increment counter
-        counter += 1;
+        left.order();
+        right.order();
 
+        //Everything is pushed back into the heap so nothing is lost.
+        heap.push(Reverse(left));
+        heap.push(Reverse(right));
+
+        heap.append(&mut temp_heap);
 
         //Reset to avoid accessing out of bounds
-        if counter == vec.len() - 1 {
+        if counter == heap.len() - 2 {
             //Info dump
             println!("Total reads done: {}",counter+1); //+1 because index 0 also counts as a read
+
             //Closing boolean
             sorted = true; 
         }
+        //Increment counter
+        counter += 1;
     }
-    
-    for node in vec {
-        result.append(&mut node.slices());
-    } 
+
+    //Pops the heap into the list in order
+    for _i in 0..counter+1 {
+        list.append(&mut heap.pop().unwrap().0.slices());
+    }
 
 
-    result
+
 }
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![42,67,12,13,34,23,56,6,7,18];
+    let mut numbers = vec![42,67,73,23,5,57,24,72,82,98,12,32,56,123];
 
-    let result = tuple_sort(&mut numbers);
+    tuple_sort(&mut numbers);
 
-    println!("Result: {:?}",result);
+    println!("Result: {:?}",numbers);
 }
