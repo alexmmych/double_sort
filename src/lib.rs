@@ -9,13 +9,49 @@
 //and then it compares the right most number against the neighbour's left most number to see which one is smaller
 //and changes them accordingly until fully solved.
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vector_is_sorted() { //Checks if the provided vector is sorted
+        //The numbers to be ordered
+        let mut vector = vec![48,23,78,67,89,22,33,44];
+    
+        tuple_sort::tuple_sort(&mut vector);
+
+        assert_eq!(vector,[22,23,33,44,48,67,78,89],"Example vector was not sorted properly");
+    }
+
+    #[test]
+    fn early_return() { //Checks if the function returns ordered when an early return occurs.
+        let mut single_number_vector = vec![1];
+        let mut two_number_vector = vec![2,1];
+
+        tuple_sort::tuple_sort(&mut single_number_vector);
+        tuple_sort::tuple_sort(&mut two_number_vector);
+
+        assert_eq!(single_number_vector,[1]);
+        assert_eq!(two_number_vector,[1,2]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_if_vector_empty() { //Checks if the function panics if there's an empty vector
+        let mut vector = vec![];
+
+        tuple_sort::tuple_sort(&mut vector);
+    }
+
+}
+
 pub mod tuple_sort {
 
     use std::collections::BinaryHeap;
     use std::cmp::Reverse;
     use std::cmp::Ordering;
 
-    #[derive(PartialEq, PartialOrd,Eq)]
+    #[derive(PartialEq, PartialOrd,Eq,Debug)]
     struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
 
     impl Node {
@@ -45,7 +81,8 @@ pub mod tuple_sort {
             self.0.cmp(&other.0)
         }
     }
-
+    
+    //Checks if the left element is the smallest and if not then swaps with the right element so they are ordered from left to right.
     fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
         if left > right {
             std::mem::swap(left,right);
@@ -55,7 +92,7 @@ pub mod tuple_sort {
         }
     }
 
-    //Sorts a vector of numbers
+    //Sorts a vector of numbers by pairing them and ordering them by the lowest number, then exchanging numbers in order to sort.
     pub fn tuple_sort(list: &mut Vec<u32>) {
         //Panics if the vector is empty
         if list.is_empty() {
@@ -92,7 +129,7 @@ pub mod tuple_sort {
         //Mutable values used to control the while loop
         let mut sorted = false;
         let mut counter = 0;
-        let mut nothing = 0;
+        let mut nothing = 0; //Amount of times nothing was done on a read
         let mut total = 1;
         
         //Final sort of the values by comparing left and right values of neighbouring nodes
@@ -107,7 +144,7 @@ pub mod tuple_sort {
             let mut left = heap.pop().unwrap().0;
             let mut right = heap.pop().unwrap().0;
 
-            let mut switched = false; //Checks whether anything was changed
+            let switched: bool; //Checks whether anything was changed
 
             if let Some(_number) = left.1 {
                 switched = switch(left.1.as_mut().unwrap(),&mut right.0);
@@ -132,9 +169,13 @@ pub mod tuple_sort {
 
             //Max amount of reads needed (n/2 - 1)
             if counter == heap.len() - 2 { //-2 because .len() doesn't count 0
+
                 //Info dump
-                println!("Total reads done: {}",total); //+1 because index 0 also counts as a read
-                println!("Total number of memory switches: {}", total - nothing);
+                #[cfg(debug_assertions)]
+                {
+                    println!("Total reads done: {}",total);
+                    println!("Total number of memory switches: {}", total - nothing);
+                }
 
                 //Closing boolean
                 sorted = true;
