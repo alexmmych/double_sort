@@ -17,7 +17,7 @@ use std::cmp::Ordering;
 struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
 
 impl Node {
-    //Rearranges the node to be ordered.
+    //Rearranges the node in the correct order
     fn order(&mut self) {
         if let Some(_number) = self.1 {
             switch(&mut self.0,self.1.as_mut().unwrap());
@@ -44,9 +44,12 @@ impl Ord for Node {
     }
 }
 
-fn switch<T: PartialOrd>(left: &mut T,right: &mut T) {
+fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
     if left > right {
         std::mem::swap(left,right);
+        return true;
+    } else {
+    false
     }
 }
 
@@ -87,12 +90,14 @@ fn tuple_sort(list: &mut Vec<u32>) {
     //Mutable values used to control the while loop
     let mut sorted = false;
     let mut counter = 0;
+    let mut nothing = 0;
+    let mut total = 1;
     
     //Final sort of the values by comparing left and right values of neighbouring nodes
     while sorted == false  {
         let mut temp_heap = BinaryHeap::new();
 
-        //Temporary heap pops already sorted nodes into itself.
+        //Temporary heap pushes already sorted nodes into itself.
         for _i in 0..counter {
             temp_heap.push(heap.pop().unwrap());
         }
@@ -100,10 +105,17 @@ fn tuple_sort(list: &mut Vec<u32>) {
         let mut left = heap.pop().unwrap().0;
         let mut right = heap.pop().unwrap().0;
 
+        let mut switched = false; //Checks whether anything was changed
+
         if let Some(_number) = left.1 {
-            switch(left.1.as_mut().unwrap(),&mut right.0);
+            switched = switch(left.1.as_mut().unwrap(),&mut right.0);
         } else {
-            switch(&mut left.0,&mut right.0);
+            switched = switch(&mut left.0,&mut right.0);
+        }
+
+        if !switched {
+            //Increment the times where read did nothing
+            nothing += 1;
         }
 
         left.order();
@@ -115,20 +127,24 @@ fn tuple_sort(list: &mut Vec<u32>) {
 
         heap.append(&mut temp_heap);
 
-        //Reset to avoid accessing out of bounds
-        if counter == heap.len() - 2 {
+
+        //Max amount of reads needed (n/2 - 1)
+        if counter == heap.len() - 2 { //-2 because .len() doesn't count 0
             //Info dump
-            println!("Total reads done: {}",counter+1); //+1 because index 0 also counts as a read
+            println!("Total reads done: {}",total); //+1 because index 0 also counts as a read
+            println!("Total number of memory switches: {}", total - nothing);
 
             //Closing boolean
-            sorted = true; 
+            sorted = true;
         }
+
         //Increment counter
         counter += 1;
+        total += 1;
     }
 
     //Pops the heap into the list in order
-    for _i in 0..counter+1 {
+    for _i in 0..total{
         list.append(&mut heap.pop().unwrap().0.slices());
     }
 
@@ -138,7 +154,7 @@ fn tuple_sort(list: &mut Vec<u32>) {
 
 fn main() {
     //The numbers to be ordered
-    let mut numbers = vec![42,67,73,23,5,57,24,72,82,98,12,32,56,123];
+    let mut numbers = vec![48,23,78,67,89,22,33,44];
 
     tuple_sort(&mut numbers);
 
