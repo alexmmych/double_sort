@@ -3,5 +3,14 @@
 version = 3
 
 [[package]]
+name = "rudac"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24cbfe1be4fe7e19f6a11444e5ae699fbfdcd3648c099d242a5d6be2dbb6ef64"
+
+[[package]]
 name = "tuple_sort"
 version = "0.1.0"
+dependencies = [
+ "rudac",
+]

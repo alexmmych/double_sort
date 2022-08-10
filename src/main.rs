@@ -9,9 +9,9 @@
 //and then it compares the right most number against the neighbour's left most number to see which one is smaller
 //and changes them accordingly until fully solved.
 
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
 use std::cmp::Ordering;
+use rudac::heap::FibonacciHeap;
+
 
 #[derive(PartialEq, PartialOrd,Eq,Debug)]
 struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
@@ -61,7 +61,7 @@ fn tuple_sort(list: &mut Vec<u32>) {
     }
 
     //BinaryHeap is used due to it's efficient ordering capabilities.
-    let mut heap = BinaryHeap::new();
+    let mut heap = FibonacciHeap::init_min();
 
     //Creates nodes from chunks of the vector
     for chunk in list.chunks(2) {
@@ -75,15 +75,15 @@ fn tuple_sort(list: &mut Vec<u32>) {
 
         node.order();
 
-        heap.push(Reverse(node));
+        heap.push(node);
     }
 
     //Clears the list so it can be given the sorted slices
     list.clear();
 
     //Important check to instantly return ordered vector if it only contains 1 or 2 elements.
-    if heap.len() == 1 {
-        list.append(&mut heap.pop().unwrap().0.slices());
+    if heap.size() == 1 {
+        list.append(&mut heap.pop().unwrap().slices());
         return;
     }
 
@@ -95,15 +95,15 @@ fn tuple_sort(list: &mut Vec<u32>) {
     
     //Final sort of the values by comparing left and right values of neighbouring nodes
     while sorted == false  {
-        let mut temp_heap = BinaryHeap::new();
+        let mut temp_heap = FibonacciHeap::init_min();
 
         //Temporary heap pushes already sorted nodes into itself.
         for _i in 0..counter {
             temp_heap.push(heap.pop().unwrap());
         }
 
-        let mut left = heap.pop().unwrap().0;
-        let mut right = heap.pop().unwrap().0;
+        let mut left = heap.pop().unwrap();
+        let mut right = heap.pop().unwrap();
 
         let mut switched = false; //Checks whether anything was changed
 
@@ -122,14 +122,14 @@ fn tuple_sort(list: &mut Vec<u32>) {
         right.order();
 
         //Everything is pushed back into the heap so nothing is lost.
-        heap.push(Reverse(left));
-        heap.push(Reverse(right));
+        heap.push(left);
+        heap.push(right);
 
-        heap.append(&mut temp_heap);
+        heap = FibonacciHeap::merge(heap,temp_heap);
 
 
         //Max amount of reads needed (n/2 - 1)
-        if counter == heap.len() - 2 { //-2 because .len() doesn't count 0
+        if counter == heap.size() - 2 { //-2 because .len() doesn't count 0
             //Info dump
             println!("Total reads done: {}",total); //+1 because index 0 also counts as a read
             println!("Total number of memory switches: {}", total - nothing);
@@ -145,7 +145,7 @@ fn tuple_sort(list: &mut Vec<u32>) {
 
     //Pops the heap into the list in order
     for _i in 0..total{
-        list.append(&mut heap.pop().unwrap().0.slices());
+        list.append(&mut heap.pop().unwrap().slices());
     }
 
 
