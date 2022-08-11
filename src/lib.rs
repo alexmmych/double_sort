@@ -11,46 +11,31 @@
 
 #[cfg(test)]
 mod tests {
-    #[cfg(debug_assertions)]
-    use std::time::Instant;
 
     use super::*;
 
     #[test]
     fn num_sort() { //Checks if the provided vector is sorted
-        #[cfg(debug_assertions)]
-        let tracker = Instant::now();
-
+        
         let mut vector = vec![48,23,78,67,89,22,33,44];
     
         tuple_sort::tuple_sort(&mut vector);
 
         assert_eq!(vector,[22,23,33,44,48,67,78,89],"Example vector was not sorted properly");
-
-        #[cfg(debug_assertions)]
-        println!("Elapsed time: {:.2?}",tracker.elapsed());
     }
 
     #[test]
     fn char_sort() { //Checks if characters get sorted alphabetically
-
-        #[cfg(debug_assertions)]
-        let tracker = Instant::now();
 
         let mut vector = vec!['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']; //QWERTY layout
     
         tuple_sort::tuple_sort(&mut vector);
 
         assert_eq!(vector, ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']); //Alphabetic order
-
-        #[cfg(debug_assertions)]
-        println!("Elapsed time: {:.2?}",tracker.elapsed());
     }
 
     #[test]
     fn early_return() { //Checks if the function returns ordered when an early return occurs.
-        #[cfg(debug_assertions)]
-        let tracker = Instant::now();
 
         let mut single_number_vector = vec![1];
         let mut two_number_vector = vec![2,1];
@@ -60,14 +45,13 @@ mod tests {
 
         assert_eq!(single_number_vector,[1]);
         assert_eq!(two_number_vector,[1,2]);
-
-        #[cfg(debug_assertions)]
-        println!("Elapsed time: {:.2?}",tracker.elapsed());
     }
 
 }
 
 pub mod tuple_sort {
+    #[cfg(debug_assertions)]
+    use std::time::Instant;
 
     use std::collections::BinaryHeap;
     use std::cmp::Reverse;
@@ -115,52 +99,54 @@ pub mod tuple_sort {
 
     //Sorts a vector of numbers by pairing them and ordering them by the lowest number, then exchanging numbers in order to sort.
     pub fn tuple_sort<T: Copy + Ord>(list: &mut Vec<T>) {
-        //Panics if the vector is empty
-        if list.is_empty() {
-            panic!("tuple_sort() called with empty vector: {:?}", list.as_ptr());
+
+        #[cfg(debug_assertions)] 
+        let total = Instant::now();
+        
+
+        if list.len() <= 2 {
+            let mut node = Node(list[0],list.get(1).cloned());
+            node.order();
+
+            list.clear();
+            list.append(&mut node.slices());
+
+            #[cfg(debug_assertions)]
+            println!("Elapsed time: {:.2?}",total.elapsed());
+            
+            return;
         }
 
         //BinaryHeap is used due to it's efficient ordering capabilities.
         let mut heap = BinaryHeap::new();
 
+        #[cfg(debug_assertions)]
+        let chunks = Instant::now();
+
         //Creates nodes from chunks of the vector
         for chunk in list.chunks(2) {
-            let mut node: Node<T>;
 
-            if chunk.len() == 2 {
-                node = Node(chunk[0],Some(chunk[1]));
-            } else {
-                node = Node(chunk[0],None);
-            }
+            let mut node = Node(chunk[0],chunk.get(1).cloned());
 
             node.order();
 
             heap.push(Reverse(node));
         }
+        #[cfg(debug_assertions)]
+        println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
         //Clears the list so it can be given the sorted slices
         list.clear();
 
-        //Important check to instantly return ordered vector if it only contains 1 or 2 elements.
-        if heap.len() == 1 {
-            list.append(&mut heap.pop().unwrap().0.slices());
-            return;
-        }
-
         //Mutable values used to control the while loop
-        let mut sorted = false;
-        let mut counter = 0;
+        let mut counter = 0; //Amount of times the loop ran for
         let mut nothing = 0; //Amount of times nothing was done on a read
-        let mut total = 1;
-        
-        //Final sort of the values by comparing left and right values of neighbouring nodes
-        while sorted == false  {
-            let mut temp_heap = BinaryHeap::new();
 
-            //Temporary heap pushes already sorted nodes into itself.
-            for _i in 0..counter {
-                temp_heap.push(heap.pop().unwrap());
-            }
+        #[cfg(debug_assertions)]
+        let loops = Instant::now();
+
+        //Final sort of the values by comparing left and right values of neighbouring nodes
+        loop {
 
             let mut left = heap.pop().unwrap().0;
             let mut right = heap.pop().unwrap().0;
@@ -185,34 +171,33 @@ pub mod tuple_sort {
             heap.push(Reverse(left));
             heap.push(Reverse(right));
 
-            heap.append(&mut temp_heap);
+            //Increment counter
+            counter += 1;
 
-
-            //Max amount of reads needed (n/2 - 1)
-            if counter == heap.len() - 2 { //-2 because .len() doesn't count 0
-
+            if heap.len() == 2 {
                 //Info dump
                 #[cfg(debug_assertions)]
                 {
                     println!(""); //Whitespace
-                    println!("Total reads done: {}",total);
-                    println!("Total number of memory switches: {}", total - nothing);
+                    println!("Total reads done: {}",counter);
+                    println!("Total number of memory switches: {}", counter - nothing);
                     println!(""); //Whitespace
                 }
 
-                //Closing boolean
-                sorted = true;
+                list.append(&mut heap.pop().unwrap().0.slices());
+                list.append(&mut heap.pop().unwrap().0.slices());
+    
+                break;
             }
 
-            //Increment counter
-            counter += 1;
-            total += 1;
-        }
-
-        //Pops the heap into the list in order
-        for _i in 0..total{
             list.append(&mut heap.pop().unwrap().0.slices());
         }
+ 
+        #[cfg(debug_assertions)]
+        println!("Time looping: {:.2?}",loops.elapsed());
+
+        #[cfg(debug_assertions)]
+        println!("Total function time: {:.2?}",total.elapsed());
 
     }
 
