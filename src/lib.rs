@@ -35,14 +35,6 @@ mod tests {
         assert_eq!(two_number_vector,[1,2]);
     }
 
-    #[test]
-    #[should_panic]
-    fn panics_if_vector_empty() { //Checks if the function panics if there's an empty vector
-        let mut vector = vec![];
-
-        tuple_sort::tuple_sort(&mut vector);
-    }
-
 }
 
 pub mod tuple_sort {
@@ -51,10 +43,10 @@ pub mod tuple_sort {
     use std::cmp::Reverse;
     use std::cmp::Ordering;
 
-    #[derive(PartialEq, PartialOrd,Eq,Debug)]
-    struct Node(u32,Option<u32>); //Option<u32> is given in the case that the total amount of numbers is uneven.
+    #[derive(PartialEq,PartialOrd,Eq,Debug)]
+    struct Node<T>(T,Option<T>); //Option<T> is given in the case that the total amount of numbers is uneven.
 
-    impl Node {
+    impl<T: PartialOrd + Copy + Clone > Node<T> {
         //Rearranges the node in the correct order
         fn order(&mut self) {
             if let Some(_number) = self.1 {
@@ -63,7 +55,7 @@ pub mod tuple_sort {
         }
 
         //Returns the node in form of a vector slice
-        fn slices(&self) -> Vec<u32> {
+        fn slices(&self) -> Vec<T> {
             let mut vector = Vec::new();
             vector.push(self.0);
         
@@ -72,13 +64,6 @@ pub mod tuple_sort {
             }
         
             vector
-        }
-    }
-
-    //Implementation for order so BinaryHeap only considers leftmost value
-    impl Ord for Node {
-        fn cmp(&self, other: &Self) -> Ordering {
-            self.0.cmp(&other.0)
         }
     }
     
@@ -92,8 +77,14 @@ pub mod tuple_sort {
         }
     }
 
+    impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
+        fn cmp(&self,other: &Self) -> Ordering {
+            self.0.cmp(&other.0)
+        }
+    }
+
     //Sorts a vector of numbers by pairing them and ordering them by the lowest number, then exchanging numbers in order to sort.
-    pub fn tuple_sort(list: &mut Vec<u32>) {
+    pub fn tuple_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         //Panics if the vector is empty
         if list.is_empty() {
             panic!("tuple_sort() called with empty vector: {:?}", list.as_ptr());
@@ -104,10 +95,10 @@ pub mod tuple_sort {
 
         //Creates nodes from chunks of the vector
         for chunk in list.chunks(2) {
-            let mut node: Node;
+            let mut node: Node<T>;
 
             if chunk.len() == 2 {
-            node = Node(chunk[0],Some(chunk[1]));
+                node = Node(chunk[0],Some(chunk[1]));
             } else {
                 node = Node(chunk[0],None);
             }
