@@ -25,6 +25,15 @@ mod tests {
     }
 
     #[test]
+    fn uneven_sort() { //Checks if the function can sort an uneven amount of numbers
+        let mut vector = vec![42,23,5,6,12];
+
+        tuple_sort::tuple_sort(&mut vector);
+
+        assert_eq!(vector,[5,6,12,23,42],"Uneven amount of numbers were not sorted properly");
+    }
+
+    #[test]
     fn char_sort() { //Checks if characters get sorted alphabetically
 
         let mut vector = vec!['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']; //QWERTY layout
@@ -65,6 +74,15 @@ pub mod tuple_sort {
         fn order(&mut self) {
             if let Some(_number) = self.1 {
                 switch(&mut self.0,self.1.as_mut().unwrap());
+            }
+        }
+
+        //Informs if there is None present in the structure
+        fn none_present(&self) -> bool {
+            if self.1 == None {
+                true
+            } else {
+                false
             }
         }
 
@@ -120,27 +138,46 @@ pub mod tuple_sort {
         //BinaryHeap is used due to it's efficient ordering capabilities.
         let mut heap = BinaryHeap::new();
 
+        //Mutable values used to control the while loop
+        let mut counter = 0; //Amount of times the loop ran for
+        let mut nothing = 0; //Amount of times nothing was done on a read
+
         #[cfg(debug_assertions)]
         let chunks = Instant::now();
 
-        //Creates nodes from chunks of the vector
-        for chunk in list.chunks(2) {
+        let iter = list.chunks_exact(2);
 
-            let mut node = Node(chunk[0],chunk.get(1).cloned());
+        if !iter.remainder().is_empty() {
+            let mut node = Node(iter.remainder()[0],None);
 
             node.order();
-
             heap.push(Reverse(node));
         }
+
+        for chunk in iter {
+            let mut node = Node(chunk[0],Some(chunk[1]));
+
+            node.order();
+            heap.push(Reverse(node));
+        }
+
+        /* 
+        while counter != list.len() {
+            if counter % 2 == 0 {
+                let mut node = Node(list[counter],list.get(counter+1).cloned());
+                node.order();
+                heap.push(Reverse(node));
+            }
+            counter += 1;
+        }
+        */
+
         #[cfg(debug_assertions)]
         println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
         //Clears the list so it can be given the sorted slices
         list.clear();
 
-        //Mutable values used to control the while loop
-        let mut counter = 0; //Amount of times the loop ran for
-        let mut nothing = 0; //Amount of times nothing was done on a read
 
         #[cfg(debug_assertions)]
         let loops = Instant::now();
@@ -149,6 +186,12 @@ pub mod tuple_sort {
         loop {
 
             let mut left = heap.pop().unwrap().0;
+
+            if heap.is_empty() {
+                list.append(&mut left.slices());
+                break;
+            }
+
             let mut right = heap.pop().unwrap().0;
 
             let switched: bool; //Checks whether anything was changed
@@ -160,37 +203,61 @@ pub mod tuple_sort {
             }
 
             if !switched {
+                list.append(&mut left.slices());
+
                 //Increment the times where read did nothing
                 nothing += 1;
+                counter += 1;
+
+                if right.none_present() {
+                    list.append(&mut right.slices());
+
+                    if heap.len() == 1 {
+                        list.append(&mut heap.pop().unwrap().0.slices());
+
+                        //Info dump
+                        #[cfg(debug_assertions)]
+                        {
+                            println!(""); //Whitespace
+                            println!("Total reads done: {}",counter);
+                            println!("Total number of memory switches: {}", counter - nothing);
+                            println!(""); //Whitespace
+                        }
+
+                        break;
+                    }
+                    
+                } else {
+                    heap.push(Reverse(right));
+                }
+
+                continue;
             }
 
             left.order();
             right.order();
 
-            //Everything is pushed back into the heap so nothing is lost.
-            heap.push(Reverse(left));
-            heap.push(Reverse(right));
-
             //Increment counter
             counter += 1;
 
-            if heap.len() == 2 {
-                //Info dump
-                #[cfg(debug_assertions)]
-                {
-                    println!(""); //Whitespace
-                    println!("Total reads done: {}",counter);
-                    println!("Total number of memory switches: {}", counter - nothing);
-                    println!(""); //Whitespace
-                }
-
-                list.append(&mut heap.pop().unwrap().0.slices());
-                list.append(&mut heap.pop().unwrap().0.slices());
-    
+            if heap.is_empty() {
+                list.append(&mut left.slices());
+                list.append(&mut right.slices());
                 break;
             }
 
-            list.append(&mut heap.pop().unwrap().0.slices());
+            //Everything is pushed back into the heap so nothing is lost.
+            list.append(&mut left.slices());
+            heap.push(Reverse(right));
+
+        }
+        //Info dump
+        #[cfg(debug_assertions)]
+        {
+            println!(""); //Whitespace
+            println!("Total reads done: {}",counter);
+            println!("Total number of memory switches: {}", counter - nothing);
+            println!(""); //Whitespace
         }
  
         #[cfg(debug_assertions)]
