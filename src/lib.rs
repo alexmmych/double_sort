@@ -11,20 +11,47 @@
 
 #[cfg(test)]
 mod tests {
+    #[cfg(debug_assertions)]
+    use std::time::Instant;
+
     use super::*;
 
     #[test]
-    fn vector_is_sorted() { //Checks if the provided vector is sorted
-        //The numbers to be ordered
+    fn num_sort() { //Checks if the provided vector is sorted
+        #[cfg(debug_assertions)]
+        let tracker = Instant::now();
+
         let mut vector = vec![48,23,78,67,89,22,33,44];
     
         tuple_sort::tuple_sort(&mut vector);
 
         assert_eq!(vector,[22,23,33,44,48,67,78,89],"Example vector was not sorted properly");
+
+        #[cfg(debug_assertions)]
+        println!("Elapsed time: {:.2?}",tracker.elapsed());
+    }
+
+    #[test]
+    fn char_sort() { //Checks if characters get sorted alphabetically
+
+        #[cfg(debug_assertions)]
+        let tracker = Instant::now();
+
+        let mut vector = vec!['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']; //QWERTY layout
+    
+        tuple_sort::tuple_sort(&mut vector);
+
+        assert_eq!(vector, ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']); //Alphabetic order
+
+        #[cfg(debug_assertions)]
+        println!("Elapsed time: {:.2?}",tracker.elapsed());
     }
 
     #[test]
     fn early_return() { //Checks if the function returns ordered when an early return occurs.
+        #[cfg(debug_assertions)]
+        let tracker = Instant::now();
+
         let mut single_number_vector = vec![1];
         let mut two_number_vector = vec![2,1];
 
@@ -33,6 +60,9 @@ mod tests {
 
         assert_eq!(single_number_vector,[1]);
         assert_eq!(two_number_vector,[1,2]);
+
+        #[cfg(debug_assertions)]
+        println!("Elapsed time: {:.2?}",tracker.elapsed());
     }
 
 }
@@ -46,7 +76,7 @@ pub mod tuple_sort {
     #[derive(PartialEq,PartialOrd,Eq,Debug)]
     struct Node<T>(T,Option<T>); //Option<T> is given in the case that the total amount of numbers is uneven.
 
-    impl<T: PartialOrd + Copy + Clone > Node<T> {
+    impl<T: PartialOrd + Copy> Node<T> {
         //Rearranges the node in the correct order
         fn order(&mut self) {
             if let Some(_number) = self.1 {
@@ -164,8 +194,10 @@ pub mod tuple_sort {
                 //Info dump
                 #[cfg(debug_assertions)]
                 {
+                    println!(""); //Whitespace
                     println!("Total reads done: {}",total);
                     println!("Total number of memory switches: {}", total - nothing);
+                    println!(""); //Whitespace
                 }
 
                 //Closing boolean
