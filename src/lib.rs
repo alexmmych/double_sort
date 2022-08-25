@@ -142,9 +142,9 @@ impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
 
 ///fn main() {
 ///    let mut vector = vec![48,23,78,67,89,22,33,44];
-        
+///  
 ///    double_sort(&mut vector);
-
+/// 
 ///    assert_eq!(vector,[22,23,33,44,48,67,78,89]);
 ///}
 ///```
@@ -153,13 +153,13 @@ impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
 /// 
 /// This output will only be shown if you have debug enabled
 /// 
-///```rust
+///```text
 ///Time creating nodes: 4.09µs
 ///Time looping: 4.33µs
 ///Total function time: 14.37µs
 ///Total reads done: 3
 ///Total number of memory switches: 2
-/// ```
+///
 pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     #[cfg(debug_assertions)] 
