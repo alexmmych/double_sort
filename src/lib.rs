@@ -13,6 +13,22 @@
 mod tests {
 
     use super::*;
+    use rand::Rng;
+
+    #[test]
+    fn random_sort() { //Runs a randomized big vector of numbers as a test
+        let mut rng = rand::thread_rng();
+
+        let mut vector = Vec::new();
+
+        for _i in 0..10000 {
+            vector.push(rng.gen_range(0..100));
+        }
+
+        tuple_sort::tuple_sort(&mut vector);
+
+        println!("Sorted Vector: {:?}",vector);
+    }
 
     #[test]
     fn num_sort() { //Checks if the provided vector is sorted
@@ -146,16 +162,17 @@ pub mod tuple_sort {
         let chunks = Instant::now();
 
         let iter = list.chunks_exact(2);
+        let mut node: Node<T>;
 
         if !iter.remainder().is_empty() {
-            let mut node = Node(iter.remainder()[0],None);
+            node = Node(iter.remainder()[0],None);
 
             node.order();
             heap.push(Reverse(node));
         }
 
         for chunk in iter {
-            let mut node = Node(chunk[0],Some(chunk[1]));
+            node = Node(chunk[0],Some(chunk[1]));
 
             node.order();
             heap.push(Reverse(node));
@@ -184,7 +201,6 @@ pub mod tuple_sort {
 
         //Final sort of the values by comparing left and right values of neighbouring nodes
         loop {
-
             let mut left = heap.pop().unwrap().0;
 
             if heap.is_empty() {
