@@ -148,6 +148,18 @@ impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
 ///    assert_eq!(vector,[22,23,33,44,48,67,78,89]);
 ///}
 ///```
+/// 
+/// # Debug Assertion Output
+/// 
+/// This output will only be shown if you have debug enabled
+/// 
+///```rust
+///Time creating nodes: 4.09µs
+///Time looping: 4.33µs
+///Total function time: 14.37µs
+///Total reads done: 3
+///Total number of memory switches: 2
+/// ```
 pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     #[cfg(debug_assertions)] 
@@ -250,10 +262,8 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
                     //Info dump
                     #[cfg(debug_assertions)]
                     {
-                        println!(""); //Whitespace
                         println!("Total reads done: {}",counter);
                         println!("Total number of memory switches: {}", counter - nothing);
-                        println!(""); //Whitespace
                     }
 
                     break;
@@ -283,19 +293,18 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         heap.push(Reverse(right));
 
     }
-    //Info dump
-    #[cfg(debug_assertions)]
-    {
-        println!(""); //Whitespace
-        println!("Total reads done: {}",counter);
-        println!("Total number of memory switches: {}", counter - nothing);
-        println!(""); //Whitespace
-    }
 
     #[cfg(debug_assertions)]
     println!("Time looping: {:.2?}",loops.elapsed());
 
     #[cfg(debug_assertions)]
     println!("Total function time: {:.2?}",total.elapsed());
+
+    //Info dump
+    #[cfg(debug_assertions)]
+    {
+        println!("Total reads done: {}",counter);
+        println!("Total number of memory switches: {}", counter - nothing);
+    }
 
 }
