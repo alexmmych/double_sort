@@ -1,4 +1,4 @@
-# tuple_sort
+# double_sort
 This is a short and concise sorting algorithm written in Rust as a learning project.
 
 It works by grabbing numbers from a vector in pairs of two, putting them into a structure called Nodes,
@@ -9,4 +9,4 @@ the order of the Nodes will still be consistent. The vector is always sorted aft
 
 
 # Diagram
-![tuple_sort](https://user-images.githubusercontent.com/54857786/184100234-f2c7a726-47ee-4dad-8292-15f830bccf72.svg)
+![double_sort](https://user-images.githubusercontent.com/54857786/184100234-f2c7a726-47ee-4dad-8292-15f830bccf72.svg)
