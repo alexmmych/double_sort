@@ -1,9 +1,17 @@
 [package]
 name = "tuple_sort"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+license = "MIT"
+description = "This is a fast and simple sorting algorithm which groups numbers into pairs and orders them onwards as nodes"
+authors = ["Alexander Mychlo <alexmmych@gmail.com>"]
+repository = "https://github.com/Shroomerian/tuple_sort"
+readme = "README.md"
+keywords = ["sorting","sort"]
+categories = ["algorithms"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[dev-dependencies]
 rand = "0.8.4"
