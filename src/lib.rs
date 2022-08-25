@@ -1,5 +1,5 @@
 /*!
-double sort works by separating the elements into pairs of two called nodes, this allows
+Double sort works by separating the elements into pairs of two called nodes, this allows
 to order the two elements within the node extremely fast since it's a 1:1 memory swap.
 
 Grouping elements by nodes allows a simple loop statement to order the whole vector in n/2 - 1 reads maximum by utilizing BinaryHeaps
@@ -8,11 +8,9 @@ Grouping elements by nodes allows a simple loop statement to order the whole vec
 
 ```toml
 [dependencies]
-double_sort = "1"
+double_sort = "1.0.0"
 ```
-
 */
-
 
 #[cfg(test)]
 mod tests {
@@ -88,7 +86,7 @@ use std::cmp::Reverse;
 use std::cmp::Ordering;
 
 #[derive(PartialEq,PartialOrd,Eq,Debug)]
-pub struct Node<T>(T,Option<T>); //Option<T> is given in the case that the total amount of elements is uneven.
+struct Node<T>(T,Option<T>); 
 
 impl<T: PartialOrd + Copy> Node<T> {
     //Rearranges the node in the correct order
@@ -136,7 +134,20 @@ impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
     }
 }
 
-//Sorts a vector of elements by pairing them and ordering them by the lowest number, then exchanging elements in order to sort.
+///Sorts a vector of elements by pairing them and ordering them by the lowest number, then exchanging elements with neighbours until sorted.
+/// # Example 
+
+///```rust
+///use double_sort::double_sort;
+
+///fn main() {
+///    let mut vector = vec![48,23,78,67,89,22,33,44];
+        
+///    double_sort(&mut vector);
+
+///    assert_eq!(vector,[22,23,33,44,48,67,78,89]);
+///}
+///```
 pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     #[cfg(debug_assertions)] 
