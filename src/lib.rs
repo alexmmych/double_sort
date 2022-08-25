@@ -1,13 +1,18 @@
-//The structure implements an Option in the case that
-//the total amount of numbers is uneven.
+/*!
+double sort works by separating the elements into pairs of two called nodes, this allows
+to order the two elements within the node extremely fast since it's a 1:1 memory swap.
 
-//Tuple sort works by separating the numbers into pairs of two called nodes, this allows
-//to order the two numbers within the node extremely fast since it's a 1:1 and memory swap
+Grouping elements by nodes allows a simple loop statement to order the whole vector in n/2 - 1 reads maximum by utilizing BinaryHeaps
 
-//After the vector of numbers has been given to the function, it will divide them into nodes using chunks
-//and it will proceed to sort them firstly by using a min BinaryHeap which will pop the in ascending order automatically
-//and then it compares the right most number against the neighbour's left most number to see which one is smaller
-//and changes them accordingly until fully solved.
+# Usage
+
+```toml
+[dependencies]
+double_sort = "1"
+```
+
+*/
+
 
 #[cfg(test)]
 mod tests {
@@ -16,7 +21,7 @@ mod tests {
     use rand::Rng;
 
     #[test]
-    fn random_sort() { //Runs a randomized big vector of numbers as a test
+    fn random_sort() { //Runs a randomized big vector of elements as a test
         let mut rng = rand::thread_rng();
 
         let mut vector = Vec::new();
@@ -25,7 +30,7 @@ mod tests {
             vector.push(rng.gen_range(0..100));
         }
 
-        tuple_sort::tuple_sort(&mut vector);
+        double_sort(&mut vector);
 
         println!("Sorted Vector: {:?}",vector);
     }
@@ -35,18 +40,18 @@ mod tests {
         
         let mut vector = vec![48,23,78,67,89,22,33,44];
     
-        tuple_sort::tuple_sort(&mut vector);
+        double_sort(&mut vector);
 
         assert_eq!(vector,[22,23,33,44,48,67,78,89],"Example vector was not sorted properly");
     }
 
     #[test]
-    fn uneven_sort() { //Checks if the function can sort an uneven amount of numbers
+    fn uneven_sort() { //Checks if the function can sort an uneven amount of elements
         let mut vector = vec![42,23,5,6,12];
 
-        tuple_sort::tuple_sort(&mut vector);
+        double_sort(&mut vector);
 
-        assert_eq!(vector,[5,6,12,23,42],"Uneven amount of numbers were not sorted properly");
+        assert_eq!(vector,[5,6,12,23,42],"Uneven amount of elements were not sorted properly");
     }
 
     #[test]
@@ -54,7 +59,7 @@ mod tests {
 
         let mut vector = vec!['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m']; //QWERTY layout
     
-        tuple_sort::tuple_sort(&mut vector);
+        double_sort(&mut vector);
 
         assert_eq!(vector, ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']); //Alphabetic order
     }
@@ -65,8 +70,8 @@ mod tests {
         let mut single_number_vector = vec![1];
         let mut two_number_vector = vec![2,1];
 
-        tuple_sort::tuple_sort(&mut single_number_vector);
-        tuple_sort::tuple_sort(&mut two_number_vector);
+        double_sort(&mut single_number_vector);
+        double_sort(&mut two_number_vector);
 
         assert_eq!(single_number_vector,[1]);
         assert_eq!(two_number_vector,[1,2]);
@@ -74,214 +79,212 @@ mod tests {
 
 }
 
-pub mod tuple_sort {
-    #[cfg(debug_assertions)]
-    use std::time::Instant;
 
-    use std::collections::BinaryHeap;
-    use std::cmp::Reverse;
-    use std::cmp::Ordering;
+#[cfg(debug_assertions)]
+use std::time::Instant;
 
-    #[derive(PartialEq,PartialOrd,Eq,Debug)]
-    struct Node<T>(T,Option<T>); //Option<T> is given in the case that the total amount of numbers is uneven.
+use std::collections::BinaryHeap;
+use std::cmp::Reverse;
+use std::cmp::Ordering;
 
-    impl<T: PartialOrd + Copy> Node<T> {
-        //Rearranges the node in the correct order
-        fn order(&mut self) {
-            if let Some(_number) = self.1 {
-                switch(&mut self.0,self.1.as_mut().unwrap());
-            }
-        }
+#[derive(PartialEq,PartialOrd,Eq,Debug)]
+pub struct Node<T>(T,Option<T>); //Option<T> is given in the case that the total amount of elements is uneven.
 
-        //Informs if there is None present in the structure
-        fn none_present(&self) -> bool {
-            if self.1 == None {
-                true
-            } else {
-                false
-            }
-        }
-
-        //Returns the node in form of a vector slice
-        fn slices(&self) -> Vec<T> {
-            let mut vector = Vec::new();
-            vector.push(self.0);
-        
-            if let Some(number) = self.1 {
-                vector.push(number);
-            }
-        
-            vector
+impl<T: PartialOrd + Copy> Node<T> {
+    //Rearranges the node in the correct order
+    fn order(&mut self) {
+        if let Some(_number) = self.1 {
+            switch(&mut self.0,self.1.as_mut().unwrap());
         }
     }
-    
-    //Checks if the left element is the smallest and if not then swaps with the right element so they are ordered from left to right.
-    fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
-        if left > right {
-            std::mem::swap(left,right);
-            return true;
+
+    //Informs if there is None present in the structure
+    fn none_present(&self) -> bool {
+        if self.1 == None {
+            true
         } else {
-        false
+            false
         }
     }
 
-    impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
-        fn cmp(&self,other: &Self) -> Ordering {
-            self.0.cmp(&other.0)
+    //Returns the node in form of a vector slice
+    fn slices(&self) -> Vec<T> {
+        let mut vector = Vec::new();
+        vector.push(self.0);
+    
+        if let Some(number) = self.1 {
+            vector.push(number);
         }
+    
+        vector
     }
+}
 
-    //Sorts a vector of numbers by pairing them and ordering them by the lowest number, then exchanging numbers in order to sort.
-    pub fn tuple_sort<T: Copy + Ord>(list: &mut Vec<T>) {
+//Checks if the left element is the smallest and if not then swaps with the right element so they are ordered from left to right.
+fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
+    if left > right {
+        std::mem::swap(left,right);
+        return true;
+    } else {
+    false
+    }
+}
 
-        #[cfg(debug_assertions)] 
-        let total = Instant::now();
-        
+impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
+    fn cmp(&self,other: &Self) -> Ordering {
+        self.0.cmp(&other.0)
+    }
+}
 
-        if list.len() <= 2 {
-            let mut node = Node(list[0],list.get(1).cloned());
-            node.order();
+//Sorts a vector of elements by pairing them and ordering them by the lowest number, then exchanging elements in order to sort.
+pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
-            list.clear();
-            list.append(&mut node.slices());
+    #[cfg(debug_assertions)] 
+    let total = Instant::now();
+    
 
-            #[cfg(debug_assertions)]
-            println!("Elapsed time: {:.2?}",total.elapsed());
-            
-            return;
-        }
+    if list.len() <= 2 {
+        let mut node = Node(list[0],list.get(1).cloned());
+        node.order();
 
-        //BinaryHeap is used due to it's efficient ordering capabilities.
-        let mut heap = BinaryHeap::new();
-
-        //Mutable values used to control the while loop
-        let mut counter = 0; //Amount of times the loop ran for
-        let mut nothing = 0; //Amount of times nothing was done on a read
-
-        #[cfg(debug_assertions)]
-        let chunks = Instant::now();
-
-        let iter = list.chunks_exact(2);
-        let mut node: Node<T>;
-
-        if !iter.remainder().is_empty() {
-            node = Node(iter.remainder()[0],None);
-
-            node.order();
-            heap.push(Reverse(node));
-        }
-
-        for chunk in iter {
-            node = Node(chunk[0],Some(chunk[1]));
-
-            node.order();
-            heap.push(Reverse(node));
-        }
-
-        /* 
-        while counter != list.len() {
-            if counter % 2 == 0 {
-                let mut node = Node(list[counter],list.get(counter+1).cloned());
-                node.order();
-                heap.push(Reverse(node));
-            }
-            counter += 1;
-        }
-        */
-
-        #[cfg(debug_assertions)]
-        println!("Time creating nodes: {:.2?}",chunks.elapsed());
-
-        //Clears the list so it can be given the sorted slices
         list.clear();
-
+        list.append(&mut node.slices());
 
         #[cfg(debug_assertions)]
-        let loops = Instant::now();
+        println!("Elapsed time: {:.2?}",total.elapsed());
+        
+        return;
+    }
 
-        //Final sort of the values by comparing left and right values of neighbouring nodes
-        loop {
-            let mut left = heap.pop().unwrap().0;
+    //BinaryHeap is used due to it's efficient ordering capabilities.
+    let mut heap = BinaryHeap::new();
 
-            if heap.is_empty() {
-                list.append(&mut left.slices());
-                break;
-            }
+    //Mutable values used to control the while loop
+    let mut counter = 0; //Amount of times the loop ran for
+    let mut nothing = 0; //Amount of times nothing was done on a read
 
-            let mut right = heap.pop().unwrap().0;
+    #[cfg(debug_assertions)]
+    let chunks = Instant::now();
 
-            let switched: bool; //Checks whether anything was changed
+    let iter = list.chunks_exact(2);
+    let mut node: Node<T>;
 
-            if let Some(_number) = left.1 {
-                switched = switch(left.1.as_mut().unwrap(),&mut right.0);
-            } else {
-                switched = switch(&mut left.0,&mut right.0);
-            }
+    if !iter.remainder().is_empty() {
+        node = Node(iter.remainder()[0],None);
 
-            if !switched {
-                list.append(&mut left.slices());
+        node.order();
+        heap.push(Reverse(node));
+    }
 
-                //Increment the times where read did nothing
-                nothing += 1;
-                counter += 1;
+    for chunk in iter {
+        node = Node(chunk[0],Some(chunk[1]));
 
-                if right.none_present() {
-                    list.append(&mut right.slices());
+        node.order();
+        heap.push(Reverse(node));
+    }
 
-                    if heap.len() == 1 {
-                        list.append(&mut heap.pop().unwrap().0.slices());
+    /* 
+    while counter != list.len() {
+        if counter % 2 == 0 {
+            let mut node = Node(list[counter],list.get(counter+1).cloned());
+            node.order();
+            heap.push(Reverse(node));
+        }
+        counter += 1;
+    }
+    */
 
-                        //Info dump
-                        #[cfg(debug_assertions)]
-                        {
-                            println!(""); //Whitespace
-                            println!("Total reads done: {}",counter);
-                            println!("Total number of memory switches: {}", counter - nothing);
-                            println!(""); //Whitespace
-                        }
+    #[cfg(debug_assertions)]
+    println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
-                        break;
-                    }
-                    
-                } else {
-                    heap.push(Reverse(right));
-                }
+    //Clears the list so it can be given the sorted slices
+    list.clear();
 
-                continue;
-            }
 
-            left.order();
-            right.order();
+    #[cfg(debug_assertions)]
+    let loops = Instant::now();
 
-            //Increment counter
+    //Final sort of the values by comparing left and right values of neighbouring nodes
+    loop {
+        let mut left = heap.pop().unwrap().0;
+
+        if heap.is_empty() {
+            list.append(&mut left.slices());
+            break;
+        }
+
+        let mut right = heap.pop().unwrap().0;
+
+        let switched: bool; //Checks whether anything was changed
+
+        if let Some(_number) = left.1 {
+            switched = switch(left.1.as_mut().unwrap(),&mut right.0);
+        } else {
+            switched = switch(&mut left.0,&mut right.0);
+        }
+
+        if !switched {
+            list.append(&mut left.slices());
+
+            //Increment the times where read did nothing
+            nothing += 1;
             counter += 1;
 
-            if heap.is_empty() {
-                list.append(&mut left.slices());
+            if right.none_present() {
                 list.append(&mut right.slices());
-                break;
+
+                if heap.len() == 1 {
+                    list.append(&mut heap.pop().unwrap().0.slices());
+
+                    //Info dump
+                    #[cfg(debug_assertions)]
+                    {
+                        println!(""); //Whitespace
+                        println!("Total reads done: {}",counter);
+                        println!("Total number of memory switches: {}", counter - nothing);
+                        println!(""); //Whitespace
+                    }
+
+                    break;
+                }
+                
+            } else {
+                heap.push(Reverse(right));
             }
 
-            //Everything is pushed back into the heap so nothing is lost.
+            continue;
+        }
+
+        left.order();
+        right.order();
+
+        //Increment counter
+        counter += 1;
+
+        if heap.is_empty() {
             list.append(&mut left.slices());
-            heap.push(Reverse(right));
-
+            list.append(&mut right.slices());
+            break;
         }
-        //Info dump
-        #[cfg(debug_assertions)]
-        {
-            println!(""); //Whitespace
-            println!("Total reads done: {}",counter);
-            println!("Total number of memory switches: {}", counter - nothing);
-            println!(""); //Whitespace
-        }
- 
-        #[cfg(debug_assertions)]
-        println!("Time looping: {:.2?}",loops.elapsed());
 
-        #[cfg(debug_assertions)]
-        println!("Total function time: {:.2?}",total.elapsed());
+        //Everything is pushed back into the heap so nothing is lost.
+        list.append(&mut left.slices());
+        heap.push(Reverse(right));
 
     }
+    //Info dump
+    #[cfg(debug_assertions)]
+    {
+        println!(""); //Whitespace
+        println!("Total reads done: {}",counter);
+        println!("Total number of memory switches: {}", counter - nothing);
+        println!(""); //Whitespace
+    }
+
+    #[cfg(debug_assertions)]
+    println!("Time looping: {:.2?}",loops.elapsed());
+
+    #[cfg(debug_assertions)]
+    println!("Total function time: {:.2?}",total.elapsed());
 
 }
