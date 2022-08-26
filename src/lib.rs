@@ -44,6 +44,15 @@ mod tests {
     }
 
     #[test]
+    fn test() {
+        let mut vector = vec![48,22,32,80];
+
+        double_sort(&mut vector);
+
+        println!("{:?}",vector);
+    }
+
+    #[test]
     fn uneven_sort() { //Checks if the function can sort an uneven amount of elements
         let mut vector = vec![42,23,5,6,12];
 
@@ -81,11 +90,7 @@ mod tests {
 #[cfg(debug_assertions)]
 use std::time::Instant;
 
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
-use std::cmp::Ordering;
-
-#[derive(PartialEq,PartialOrd,Eq,Debug)]
+#[derive(PartialEq,PartialOrd,Eq,Debug,Clone, Copy,Ord)]
 struct Node<T>(T,Option<T>); 
 
 impl<T: PartialOrd + Copy> Node<T> {
@@ -99,6 +104,14 @@ impl<T: PartialOrd + Copy> Node<T> {
     //Informs if there is None present in the structure
     fn none_present(&self) -> bool {
         if self.1 == None {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn contains(&self,element:T) -> bool {
+        if element == self.0 {
             true
         } else {
             false
@@ -125,12 +138,6 @@ fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
         return true;
     } else {
     false
-    }
-}
-
-impl<T: PartialOrd + Eq + Ord> Ord for Node<T> {
-    fn cmp(&self,other: &Self) -> Ordering {
-        self.0.cmp(&other.0)
     }
 }
 
@@ -179,15 +186,14 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         return;
     }
 
-    //BinaryHeap is used due to it's efficient ordering capabilities.
-    let mut heap = BinaryHeap::new();
-
     //Mutable values used to control the while loop
     let mut counter = 0; //Amount of times the loop ran for
     let mut nothing = 0; //Amount of times nothing was done on a read
 
     #[cfg(debug_assertions)]
     let chunks = Instant::now();
+
+    let mut vector = Vec::new();
 
     let iter = list.chunks_exact(2);
     let mut node: Node<T>;
@@ -196,27 +202,49 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         node = Node(iter.remainder()[0],None);
 
         node.order();
-        heap.push(Reverse(node));
+
+        vector.push(node);
     }
 
     for chunk in iter {
         node = Node(chunk[0],Some(chunk[1]));
 
         node.order();
-        heap.push(Reverse(node));
+
+        vector.push(node);
     }
 
-    /* 
-    while counter != list.len() {
-        if counter % 2 == 0 {
-            let mut node = Node(list[counter],list.get(counter+1).cloned());
-            node.order();
-            heap.push(Reverse(node));
+    let mut reference_vec = Vec::new();
+    let mut temp_vec = Vec::new();
+
+    println!("{}",vector.len());
+
+    if vector.len() >= 2 {
+
+        let mut counter = 0;
+
+        while counter != vector.len() - 1 {
+            let node = Node(vector[counter].0,Some(vector[counter+1].0));
+            temp_vec.push(node);
+            counter += 1;
         }
-        counter += 1;
-    }
-    */
 
+        for reference in temp_vec {
+            let left_node = *vector.iter().find(|x| x.contains(reference.0) == true).unwrap();
+
+            reference_vec.push(left_node);
+
+            if let Some(_element) = reference.1 {
+                let right_node = *vector.iter().find(|x| x.contains(reference.1.unwrap()) == true).unwrap();
+
+                reference_vec.push(right_node);
+            }
+        }
+
+        vector = reference_vec;
+    }
+
+    
     #[cfg(debug_assertions)]
     println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
@@ -229,14 +257,15 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     //Final sort of the values by comparing left and right values of neighbouring nodes
     loop {
-        let mut left = heap.pop().unwrap().0;
 
-        if heap.is_empty() {
+        let mut left = vector[counter];
+
+        if counter == vector.len() - 1 {
             list.append(&mut left.slices());
             break;
         }
 
-        let mut right = heap.pop().unwrap().0;
+        let mut right = vector[counter+1];
 
         let switched: bool; //Checks whether anything was changed
 
@@ -256,8 +285,10 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
             if right.none_present() {
                 list.append(&mut right.slices());
 
-                if heap.len() == 1 {
-                    list.append(&mut heap.pop().unwrap().0.slices());
+                if vector.len() == 1 {
+                    let left = vector.get(counter).unwrap();
+
+                    list.append(&mut left.slices());
 
                     //Info dump
                     #[cfg(debug_assertions)]
@@ -269,10 +300,7 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
                     break;
                 }
                 
-            } else {
-                heap.push(Reverse(right));
             }
-
             continue;
         }
 
@@ -282,7 +310,7 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         //Increment counter
         counter += 1;
 
-        if heap.is_empty() {
+        if counter == vector.len() - 1 {
             list.append(&mut left.slices());
             list.append(&mut right.slices());
             break;
@@ -290,7 +318,6 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
         //Everything is pushed back into the heap so nothing is lost.
         list.append(&mut left.slices());
-        heap.push(Reverse(right));
 
     }
 
