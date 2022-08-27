@@ -24,7 +24,7 @@ mod tests {
 
         let mut vector = Vec::new();
 
-        for _i in 0..10000 {
+        for _i in 0..100 {
             vector.push(rng.gen_range(0..100));
         }
 
@@ -45,11 +45,11 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut vector = vec![48,22,32,80];
+        let mut vector = vec![48,22,32,80,78];
 
         double_sort(&mut vector);
 
-        println!("{:?}",vector);
+        assert_eq!(vector,[22, 32, 48, 78, 80]);
     }
 
     #[test]
@@ -89,6 +89,7 @@ mod tests {
 
 #[cfg(debug_assertions)]
 use std::time::Instant;
+use core::fmt::Debug;
 
 #[derive(PartialEq,PartialOrd,Eq,Debug,Clone, Copy,Ord)]
 struct Node<T>(T,Option<T>); 
@@ -167,14 +168,19 @@ fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
 ///Total reads done: 3
 ///Total number of memory switches: 2
 ///
-pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
+pub fn double_sort<T: Copy + Ord + Debug>(list: &mut Vec<T>) {
 
     #[cfg(debug_assertions)] 
     let total = Instant::now();
     
 
     if list.len() <= 2 {
-        let mut node = Node(list[0],list.get(1).cloned());
+
+        if list.len() == 1 {
+            return;
+        }
+
+        let mut node = Node(list[0],Some(list[1]));
         node.order();
 
         list.clear();
@@ -197,13 +203,14 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     let iter = list.chunks_exact(2);
     let mut node: Node<T>;
+    let temp_node: Option<Node<T>>;
 
     if !iter.remainder().is_empty() {
-        node = Node(iter.remainder()[0],None);
+        temp_node = Some(Node(iter.remainder()[0],None));
 
-        node.order();
-
-        vector.push(node);
+        temp_node.unwrap().order();
+    } else {
+        temp_node = None;
     }
 
     for chunk in iter {
@@ -214,35 +221,27 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         vector.push(node);
     }
 
+    if let Some(_element) = temp_node {
+        vector.push(temp_node.unwrap());
+    }
+    
+
     let mut reference_vec = Vec::new();
     let mut temp_vec = Vec::new();
 
-    println!("{}",vector.len());
-
-    if vector.len() >= 2 {
-
-        let mut counter = 0;
-
-        while counter != vector.len() - 1 {
-            let node = Node(vector[counter].0,Some(vector[counter+1].0));
-            temp_vec.push(node);
-            counter += 1;
-        }
-
-        for reference in temp_vec {
-            let left_node = *vector.iter().find(|x| x.contains(reference.0) == true).unwrap();
-
-            reference_vec.push(left_node);
-
-            if let Some(_element) = reference.1 {
-                let right_node = *vector.iter().find(|x| x.contains(reference.1.unwrap()) == true).unwrap();
-
-                reference_vec.push(right_node);
-            }
-        }
-
-        vector = reference_vec;
+    for node in &vector {
+        temp_vec.push(node.0);
     }
+
+    double_sort(&mut temp_vec);
+
+    for reference in temp_vec {
+        let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
+
+        reference_vec.push(left_node);
+    }
+
+    vector = reference_vec;
 
     
     #[cfg(debug_assertions)]
@@ -276,6 +275,7 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         }
 
         if !switched {
+            vector[counter] = left;
             list.append(&mut left.slices());
 
             //Increment the times where read did nothing
@@ -283,10 +283,15 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
             counter += 1;
 
             if right.none_present() {
+                vector[counter] = right;
                 list.append(&mut right.slices());
 
-                if vector.len() == 1 {
-                    let left = vector.get(counter).unwrap();
+                if counter == vector.len() - 1 {
+                    break;
+                }
+
+                if counter == vector.len() - 2 {
+                    let left = vector[counter+1];
 
                     list.append(&mut left.slices());
 
@@ -307,6 +312,8 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         left.order();
         right.order();
 
+        vector[counter] = left;
+        vector[counter+1] = right;
         //Increment counter
         counter += 1;
 
@@ -319,10 +326,29 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         //Everything is pushed back into the heap so nothing is lost.
         list.append(&mut left.slices());
 
+        let mut temp_vec = Vec::new();
+        let mut reference_vec = Vec::new();
+
+        for node in &vector {
+            temp_vec.push(node.0);
+        }
+    
+        double_sort(&mut temp_vec);
+    
+        for reference in temp_vec {
+            let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
+    
+            reference_vec.push(left_node);
+        }
+    
+        vector = reference_vec;
+
     }
 
     #[cfg(debug_assertions)]
     println!("Time looping: {:.2?}",loops.elapsed());
+
+    println!("Sorted List: {:?}",list);
 
     #[cfg(debug_assertions)]
     println!("Total function time: {:.2?}",total.elapsed());
