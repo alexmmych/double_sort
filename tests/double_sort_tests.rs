@@ -5,17 +5,15 @@ use double_sort::double_heap_sort;
 mod tests {
 
     use super::*;
-    use rand::Rng;
+    use rand::thread_rng;
+    use rand::seq::SliceRandom; 
 
     #[test]
     fn random_sort() { //Runs a randomized big vector of elements as a test
-        let mut rng = rand::thread_rng();
 
-        let mut vector = Vec::new();
+        let mut vector: Vec<u32> = (0..1000).collect();
 
-        for _i in 0..100 {
-            vector.push(rng.gen_range(0..100));
-        }
+        vector.shuffle(&mut thread_rng());
 
         let mut heap_vector = vector.to_vec();
 
