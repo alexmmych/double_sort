@@ -8,7 +8,7 @@ Grouping elements by nodes allows a simple loop statement to order the whole vec
 
 ```toml
 [dependencies]
-double_sort = "1.1.1"
+double_sort = "1.2.0"
 ```
 */
 
@@ -278,18 +278,7 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 ///    assert_eq!(vector,[22,23,33,44,48,67,78,89]);
 ///}
 ///```
-/// 
-/// # Debug Assertion Output
-/// 
-/// This output will only be shown if you have debug enabled
-/// 
-///```text
-///Time creating nodes: 4.09µs
-///Time looping: 4.33µs
-///Total function time: 14.37µs
-///Total reads done: 3
-///Total number of memory switches: 2
-///
+
 pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     use std::collections::BinaryHeap;
