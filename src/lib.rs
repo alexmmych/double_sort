@@ -139,7 +139,7 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
         temp_vec.push(node.0);
     }
 
-    double_sort(&mut temp_vec);
+    double_heap_sort(&mut temp_vec);
 
     for reference in temp_vec {
         let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
@@ -261,7 +261,7 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             temp_vec.push(node.0);
         }
     
-        double_sort(&mut temp_vec);
+        double_heap_sort(&mut temp_vec);
     
         for reference in temp_vec {
             let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
@@ -288,7 +288,7 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
 }
 
-/* 
+
 
 ///Works in the same way that [double_sort] does but utilizes [BinaryHeaps](std::collections::BinaryHeap). This provides a faster but less logarithmic sort since
 /// it only shaves half [heap.pop()](https://doc.rust-lang.org/std/collections/struct.BinaryHeap.html#method.pop) runs.
@@ -320,7 +320,7 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 ///Total reads done: 3
 ///Total number of memory switches: 2
 ///
-pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
+pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     use std::collections::BinaryHeap;
     use std::cmp::Reverse;
@@ -328,12 +328,11 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     #[cfg(debug_assertions)] 
     let total = Instant::now();
     
-    if list.len() <= 2 {
-        let mut node = Node(list[0],list.get(1).cloned());
+    if array.len() <= 2 {
+        let mut node = Node(array[0],array.get(1).cloned());
         node.order();
 
-        list.clear();
-        list.append(&mut node.slices());
+        node.change_vector(array, 0);
 
         #[cfg(debug_assertions)]
         println!("Elapsed time: {:.2?}",total.elapsed());
@@ -351,7 +350,7 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     #[cfg(debug_assertions)]
     let chunks = Instant::now();
 
-    let iter = list.chunks_exact(2);
+    let iter = array.chunks_exact(2);
     let mut node: Node<T>;
 
     if !iter.remainder().is_empty() {
@@ -371,19 +370,23 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     #[cfg(debug_assertions)]
     println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
-    //Clears the list so it can be given the sorted slices
-    list.clear();
-
 
     #[cfg(debug_assertions)]
     let loops = Instant::now();
 
+    let mut index = 0;
+
     //Final sort of the values by comparing left and right values of neighbouring nodes
     loop {
+
+        if heap.is_empty() {
+            break;
+        }
+
         let mut left = heap.pop().unwrap().0;
 
         if heap.is_empty() {
-            list.append(&mut left.slices());
+            left.change_vector(array, index);
             break;
         }
 
@@ -398,17 +401,27 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         }
 
         if !switched {
-            list.append(&mut left.slices());
+            left.change_vector(array, index);
 
             //Increment the times where read did nothing
             nothing += 1;
             counter += 1;
 
+            if left.none_present() {
+                index += 1;
+            } else {
+                index += 2;
+            }
+
             if right.none_present() {
-                list.append(&mut right.slices());
+                right.change_vector(array, index);
+
+                index += 1;
 
                 if heap.len() == 1 {
-                    list.append(&mut heap.pop().unwrap().0.slices());
+                    let left = heap.pop().unwrap().0;
+
+                    left.change_vector(array, index);
 
                     //Info dump
                     #[cfg(debug_assertions)]
@@ -434,13 +447,27 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         counter += 1;
 
         if heap.is_empty() {
-            list.append(&mut left.slices());
-            list.append(&mut right.slices());
+            left.change_vector(array, index);
+
+            if left.none_present() {
+                index += 1;
+            } else {
+                index += 2;
+            }
+
+            right.change_vector(array, index); //Index out of bounds on random_sort
             break;
         }
 
         //Everything is pushed back into the heap so nothing is lost.
-        list.append(&mut left.slices());
+        left.change_vector(array, index);
+        
+        if left.none_present() {
+            index += 1;
+        } else {
+            index += 2;
+        }
+
         heap.push(Reverse(right));
 
     }
@@ -459,4 +486,3 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     }
 }
 
-*/

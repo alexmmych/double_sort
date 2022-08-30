@@ -12,11 +12,13 @@ mod tests {
 
         let mut vector: Vec<u32> = (0..1000).collect();
 
+        let sorted_vec = vector.to_vec();
+
         vector.shuffle(&mut thread_rng());
 
         double_sort(&mut vector);
 
-        println!("Sorted Vector: {:?}",vector);
+        assert_eq!(vector,sorted_vec,"Example vector was not sorted properly");
     }
 
     #[test]
