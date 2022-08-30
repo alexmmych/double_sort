@@ -10,7 +10,7 @@ mod tests {
     #[test]
     fn random_sort() { //Runs a randomized big vector of elements as a test
 
-        let mut vector: Vec<u32> = (0..1000).collect();
+        let mut vector: Vec<u32> = (0..5000).collect();
 
         let sorted_vec = vector.to_vec();
 

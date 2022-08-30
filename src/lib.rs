@@ -8,7 +8,7 @@ Grouping elements by nodes allows a simple loop statement to order the whole vec
 
 ```toml
 [dependencies]
-double_sort = "1.1.0"
+double_sort = "1.1.1"
 ```
 */
 
@@ -141,8 +141,8 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     double_heap_sort(&mut temp_vec);
 
-    for reference in temp_vec {
-        let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
+    for reference in &temp_vec {
+        let left_node = *vector.iter().find(|x| x.contains(*reference) == true).unwrap();
 
         reference_vec.push(left_node);
     }
@@ -254,22 +254,24 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             index += 2;
         }
 
-        let mut temp_vec = Vec::new();
+        let mut temporary_vec = Vec::new();
         let mut reference_vec = Vec::new();
 
         for node in &vector {
-            temp_vec.push(node.0);
+            temporary_vec.push(node.0);
         }
     
-        double_heap_sort(&mut temp_vec);
-    
-        for reference in temp_vec {
-            let left_node = *vector.iter().find(|x| x.contains(reference) == true).unwrap();
-    
-            reference_vec.push(left_node);
+        double_heap_sort(&mut temporary_vec);
+
+        if temporary_vec != temp_vec {
+            for reference in &temporary_vec {
+                let left_node = *vector.iter().find(|x| x.contains(*reference) == true).unwrap();
+        
+                reference_vec.push(left_node);
+            }
+        
+            vector = reference_vec;
         }
-    
-        vector = reference_vec;
 
     }
 
