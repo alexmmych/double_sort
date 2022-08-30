@@ -12,10 +12,6 @@ double_sort = "1.1.1"
 ```
 */
 
-#[cfg(debug_assertions)]
-use std::time::Instant;
-use core::fmt::Debug;
-
 #[derive(PartialEq,PartialOrd,Eq,Debug,Clone, Copy,Ord)]
 struct Node<T>(T,Option<T>); 
 
@@ -78,8 +74,6 @@ fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
 ///```
 pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
-    #[cfg(debug_assertions)] 
-    let total = Instant::now();
 
     if array.len() <= 2 {
 
@@ -91,19 +85,13 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
         node.order();
 
         node.change_vector(array, 0);
-
-        #[cfg(debug_assertions)]
-        println!("Elapsed time: {:.2?}",total.elapsed());
         
         return;
     }
 
     //Mutable values used to control the while loop
-    let mut counter = 0; //Amount of times the loop ran for
-    let mut nothing = 0; //Amount of times nothing was done on a read
+    let mut _counter = 0; //Amount of times the loop ran for
 
-    #[cfg(debug_assertions)]
-    let chunks = Instant::now();
 
     let mut vector = Vec::new();
 
@@ -149,26 +137,19 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     vector = reference_vec;
 
-    
-    #[cfg(debug_assertions)]
-    println!("Time creating nodes: {:.2?}",chunks.elapsed());
-
-
-    #[cfg(debug_assertions)]
-    let loops = Instant::now();
 
     let mut index = 0;
 
     //Final sort of the values by comparing left and right values of neighbouring nodes
     loop {
-        let mut left = vector[counter];
+        let mut left = vector[_counter];
 
-        if counter == vector.len() - 1 {
+        if _counter == vector.len() - 1 {
             left.change_vector(array, index);
             break;
         }
 
-        let mut right = vector[counter+1];
+        let mut right = vector[_counter+1];
 
         let switched: bool; //Checks whether anything was changed
 
@@ -178,13 +159,20 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             switched = switch(&mut left.0,&mut right.0);
         }
 
+        let mut end_left = vector[vector.len() - 2];
+        let mut end_right = vector[vector.len() - 1];
+
+        if let Some(_number) = end_left.1 {
+            switch(end_left.1.as_mut().unwrap() ,&mut end_right.0);
+        } else {
+            switch(&mut end_left.0,&mut end_right.0);
+        }
+
         if !switched {
             left.change_vector(array, index);
-            vector[counter] = left;
+            vector[_counter] = left;
 
-            //Increment the times where read did nothing
-            nothing += 1;
-            counter += 1;
+            _counter += 1;
 
             if left.none_present() {
                 index += 1;
@@ -194,26 +182,19 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
             if right.none_present() {
                 right.change_vector(array, index);
-                vector[counter] = right;
+                vector[_counter] = right;
 
-                if counter == vector.len() - 1 {
+                if _counter == vector.len() - 1 {
                     break;
                 }
 
                 index += 1;
-                counter += 1;
+                _counter += 1;
 
-                if counter == vector.len() - 2 {
-                    let left = vector[counter];
+                if _counter == vector.len() - 2 {
+                    let left = vector[_counter];
 
                     left.change_vector(array, index);
-
-                    //Info dump
-                    #[cfg(debug_assertions)]
-                    {
-                        println!("Total reads done: {}",counter);
-                        println!("Total number of memory switches: {}", counter - nothing);
-                    }
 
                     break;
                 }
@@ -225,10 +206,10 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
         left.order();
         right.order();
 
-        vector[counter] = left;
-        vector[counter+1] = right;
+        vector[_counter] = left;
+        vector[_counter+1] = right;
 
-        if counter == vector.len() - 1 {
+        if _counter == vector.len() - 1 {
             left.change_vector(array, index);
 
             if left.none_present() {
@@ -241,8 +222,8 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             break;
         }
 
-        //Increment counter
-        counter += 1;
+        //Increment _counter
+        _counter += 1;
 
 
         //Everything is pushed back into the heap so nothing is lost.
@@ -273,19 +254,6 @@ pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             vector = reference_vec;
         }
 
-    }
-
-    #[cfg(debug_assertions)]
-    println!("Time looping: {:.2?}",loops.elapsed());
-
-    #[cfg(debug_assertions)]
-    println!("Total function time: {:.2?}",total.elapsed());
-
-    //Info dump
-    #[cfg(debug_assertions)]
-    {
-        println!("Total reads done: {}",counter);
-        println!("Total number of memory switches: {}", counter - nothing);
     }
 
 }
@@ -326,18 +294,12 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     use std::collections::BinaryHeap;
     use std::cmp::Reverse;
-
-    #[cfg(debug_assertions)] 
-    let total = Instant::now();
     
     if array.len() <= 2 {
         let mut node = Node(array[0],array.get(1).cloned());
         node.order();
 
         node.change_vector(array, 0);
-
-        #[cfg(debug_assertions)]
-        println!("Elapsed time: {:.2?}",total.elapsed());
         
         return;
     }
@@ -346,11 +308,7 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
     let mut heap = BinaryHeap::new();
 
     //Mutable values used to control the while loop
-    let mut counter = 0; //Amount of times the loop ran for
-    let mut nothing = 0; //Amount of times nothing was done on a read
-
-    #[cfg(debug_assertions)]
-    let chunks = Instant::now();
+    let mut _counter = 0; //Amount of times the loop ran for
 
     let iter = array.chunks_exact(2);
     let mut node: Node<T>;
@@ -368,13 +326,6 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
         node.order();
         heap.push(Reverse(node));
     }
-
-    #[cfg(debug_assertions)]
-    println!("Time creating nodes: {:.2?}",chunks.elapsed());
-
-
-    #[cfg(debug_assertions)]
-    let loops = Instant::now();
 
     let mut index = 0;
 
@@ -406,8 +357,7 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
             left.change_vector(array, index);
 
             //Increment the times where read did nothing
-            nothing += 1;
-            counter += 1;
+            _counter += 1;
 
             if left.none_present() {
                 index += 1;
@@ -425,13 +375,6 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
                     left.change_vector(array, index);
 
-                    //Info dump
-                    #[cfg(debug_assertions)]
-                    {
-                        println!("Total reads done: {}",counter);
-                        println!("Total number of memory switches: {}", counter - nothing);
-                    }
-
                     break;
                 }
                 
@@ -445,8 +388,8 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
         left.order();
         right.order();
 
-        //Increment counter
-        counter += 1;
+        //Increment _counter
+        _counter += 1;
 
         if heap.is_empty() {
             left.change_vector(array, index);
@@ -472,19 +415,6 @@ pub fn double_heap_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
         heap.push(Reverse(right));
 
-    }
-
-    #[cfg(debug_assertions)]
-    println!("Time looping: {:.2?}",loops.elapsed());
-
-    #[cfg(debug_assertions)]
-    println!("Total function time: {:.2?}",total.elapsed());
-
-    //Info dump
-    #[cfg(debug_assertions)]
-    {
-        println!("Total reads done: {}",counter);
-        println!("Total number of memory switches: {}", counter - nothing);
     }
 }
 
