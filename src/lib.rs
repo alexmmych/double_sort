@@ -44,16 +44,11 @@ impl<T: PartialOrd + Copy> Node<T> {
         }
     }
 
-    //Returns the node in form of a vector slice
-    fn slices(&self) -> Vec<T> {
-        let mut vector = Vec::new();
-        vector.push(self.0);
-    
+    fn change_vector(&self, array: &mut Vec<T>, index: usize) {
+        array[index] = self.0;
         if let Some(number) = self.1 {
-            vector.push(number);
+            array[index+1] = number;
         }
-    
-        vector
     }
 }
 
@@ -81,22 +76,21 @@ fn switch<T: PartialOrd>(left: &mut T,right: &mut T) -> bool {
 ///    assert_eq!(vector,[22,23,33,44,48,67,78,89]);
 ///}
 ///```
-pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
+pub fn double_sort<T: Copy + Ord>(array: &mut Vec<T>) {
 
     #[cfg(debug_assertions)] 
     let total = Instant::now();
 
-    if list.len() <= 2 {
+    if array.len() <= 2 {
 
-        if list.len() == 1 {
+        if array.len() == 1 {
             return;
         }
 
-        let mut node = Node(list[0],Some(list[1]));
+        let mut node = Node(array[0],Some(array[1]));
         node.order();
 
-        list.clear();
-        list.append(&mut node.slices());
+        node.change_vector(array, 0);
 
         #[cfg(debug_assertions)]
         println!("Elapsed time: {:.2?}",total.elapsed());
@@ -113,7 +107,7 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
     let mut vector = Vec::new();
 
-    let iter = list.chunks_exact(2);
+    let iter = array.chunks_exact(2);
     let mut node: Node<T>;
     let temp_node: Option<Node<T>>;
 
@@ -159,20 +153,18 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     #[cfg(debug_assertions)]
     println!("Time creating nodes: {:.2?}",chunks.elapsed());
 
-    //Clears the list so it can be given the sorted slices
-    list.clear();
-
 
     #[cfg(debug_assertions)]
     let loops = Instant::now();
 
+    let mut index = 0;
+
     //Final sort of the values by comparing left and right values of neighbouring nodes
     loop {
-
         let mut left = vector[counter];
 
         if counter == vector.len() - 1 {
-            list.append(&mut left.slices());
+            left.change_vector(array, index);
             break;
         }
 
@@ -187,25 +179,34 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         }
 
         if !switched {
+            left.change_vector(array, index);
             vector[counter] = left;
-            list.append(&mut left.slices());
 
             //Increment the times where read did nothing
             nothing += 1;
             counter += 1;
 
+            if left.none_present() {
+                index += 1;
+            } else {
+                index += 2;
+            }
+
             if right.none_present() {
+                right.change_vector(array, index);
                 vector[counter] = right;
-                list.append(&mut right.slices());
 
                 if counter == vector.len() - 1 {
                     break;
                 }
 
-                if counter == vector.len() - 2 {
-                    let left = vector[counter+1];
+                index += 1;
+                counter += 1;
 
-                    list.append(&mut left.slices());
+                if counter == vector.len() - 2 {
+                    let left = vector[counter];
+
+                    left.change_vector(array, index);
 
                     //Info dump
                     #[cfg(debug_assertions)]
@@ -226,17 +227,32 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
 
         vector[counter] = left;
         vector[counter+1] = right;
-        //Increment counter
-        counter += 1;
 
         if counter == vector.len() - 1 {
-            list.append(&mut left.slices());
-            list.append(&mut right.slices());
+            left.change_vector(array, index);
+
+            if left.none_present() {
+                index += 1;
+            } else {
+                index += 2;
+            }
+
+            right.change_vector(array, index); //Index out of bounds on random_sort
             break;
         }
 
+        //Increment counter
+        counter += 1;
+
+
         //Everything is pushed back into the heap so nothing is lost.
-        list.append(&mut left.slices());
+        left.change_vector(array, index);
+
+        if left.none_present() {
+            index += 1;
+        } else {
+            index += 2;
+        }
 
         let mut temp_vec = Vec::new();
         let mut reference_vec = Vec::new();
@@ -271,6 +287,8 @@ pub fn double_sort<T: Copy + Ord>(list: &mut Vec<T>) {
     }
 
 }
+
+/* 
 
 ///Works in the same way that [double_sort] does but utilizes [BinaryHeaps](std::collections::BinaryHeap). This provides a faster but less logarithmic sort since
 /// it only shaves half [heap.pop()](https://doc.rust-lang.org/std/collections/struct.BinaryHeap.html#method.pop) runs.
@@ -440,3 +458,5 @@ pub fn double_heap_sort<T: Copy + Ord>(list: &mut Vec<T>) {
         println!("Total number of memory switches: {}", counter - nothing);
     }
 }
+
+*/
